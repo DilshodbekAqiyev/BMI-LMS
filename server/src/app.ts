@@ -26,7 +26,7 @@ app.use("/api/v1/auth", userRouter);
 // testing api
 app.get("/api/test", (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
-    success: true,
+    status: "success",
     message: "API is working",
   });
 });

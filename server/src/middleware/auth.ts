@@ -4,10 +4,11 @@ import ErrorHandler from "../utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { redis } from "../utils/redis";
 import { IUser } from "../models/user.model";
+import { AuthRequest } from "../types/custom";
 
 // authenticated user
 export const isAuthenticated = CatchAsyncErrors(
-  async (req: any, res: Response, next: NextFunction) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { accessToken } = req.cookies;
 
     if (!accessToken) {
@@ -39,7 +40,7 @@ export const isAuthenticated = CatchAsyncErrors(
 
 // validate user role
 export const authorizeRoles = (...roles: string[]) => {
-  return (req: any, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (roles.includes(req.user?.role.toString() || "")) {
       return next();
     }

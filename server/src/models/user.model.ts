@@ -89,7 +89,7 @@ userSchema.methods.signRefreshToken = function () {
     { id: this._id },
     (process.env.REFRESH_TOKEN as string) || "",
     {
-      expiresIn: "7d",
+      expiresIn: "3d",
     },
   );
 };
