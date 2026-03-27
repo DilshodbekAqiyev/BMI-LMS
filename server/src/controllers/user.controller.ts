@@ -7,6 +7,8 @@ import jwt, { Secret } from "jsonwebtoken";
 import path from "path";
 import ejs from "ejs";
 import sendEmail from "../utils/sendEmail";
+import { sendToken } from "../utils/jwt";
+import { redis } from "../utils/redis";
 
 // register a user
 interface IRegistrationBody {
@@ -65,6 +67,7 @@ export const registrationUser = CatchAsyncErrors(
   },
 );
 
+// create activation token
 interface IActivationToken {
   token: string;
   activationCode: string;
@@ -91,7 +94,6 @@ export const createActivationToken = (user: any): IActivationToken => {
 };
 
 // activate a user
-
 interface IActivationRequest {
   activation_token: string;
   activation_code: string;
@@ -130,6 +132,63 @@ export const activateUser = CatchAsyncErrors(
         success: true,
         message: "Account has been activated!",
         user,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  },
+);
+
+// Login user
+interface ILoginRequest {
+  email: string;
+  password: string;
+}
+
+export const loginUser = CatchAsyncErrors(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password } = req.body as ILoginRequest;
+
+      if (!email || !password) {
+        return next(new ErrorHandler("Please provide email and password", 400));
+      }
+
+      const user = await userModel.findOne({ email }).select("+password");
+
+      if (!user) {
+        return next(new ErrorHandler("Invalid email or password", 401));
+      }
+
+      const isPasswordMatch = await user.comparePassword(password);
+
+      if (!isPasswordMatch) {
+        return next(new ErrorHandler("Invalid email or password", 401));
+      }
+
+      sendToken(user, 200, res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  },
+);
+
+export const logoutUser = CatchAsyncErrors(
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      res.cookie("accessToken", "", { maxAge: 1 });
+      res.cookie("refreshToken", "", { maxAge: 1 });
+
+      if (!req.user) {
+        return next(new ErrorHandler("User not authenticated", 401));
+      }
+
+      const userId = req.user._id.toString();
+      await redis.del(userId);
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
