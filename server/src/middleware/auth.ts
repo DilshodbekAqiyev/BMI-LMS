@@ -36,3 +36,19 @@ export const isAuthenticated = CatchAsyncErrors(
     next();
   },
 );
+
+// validate user role
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: any, res: Response, next: NextFunction) => {
+    if (roles.includes(req.user?.role.toString() || "")) {
+      return next();
+    }
+
+    return next(
+      new ErrorHandler(
+        `Role: ${req.user?.role} is not allowed to access this resource`,
+        403,
+      ),
+    );
+  };
+};

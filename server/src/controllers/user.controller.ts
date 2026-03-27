@@ -183,7 +183,7 @@ export const logoutUser = CatchAsyncErrors(
         return next(new ErrorHandler("User not authenticated", 401));
       }
 
-      const userId = req.user._id.toString();
+      const userId = req.user._id.toString() || "";
       await redis.del(userId);
 
       res.status(200).json({
