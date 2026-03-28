@@ -7,7 +7,7 @@ class Routes {
 
   router() {
     app.use("/api/v1/auth", userRouter);
-    app.use("/api/v1/course", courseRouter);
+    app.use("/api/v1/courses", courseRouter);
   }
 }
 

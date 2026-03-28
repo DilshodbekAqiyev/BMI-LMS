@@ -4,6 +4,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import { createCourse } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { redis } from "../utils/redis";
+import { AuthRequest } from "../types/custom";
 
 // upload course
 export const uploadCourse = async (
@@ -130,6 +131,40 @@ export const getAllCourses = async (
         courses,
       });
     }
+  } catch (error: any) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+};
+
+// get course content -- only for valid user
+export const getCourseByUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userCourseList = req.user?.courses;
+
+    const courseId = req.params.id;
+
+    const courseExists = userCourseList?.find(
+      (course: any) => course._id.toString() === courseId,
+    );
+
+    if (!courseExists) {
+      return next(
+        new ErrorHandler("You are not eligible to access this course", 404),
+      );
+    }
+
+    const course = await CourseModel.findById(courseId);
+
+    const content = course?.courseData;
+
+    res.status(200).json({
+      success: true,
+      content,
+    });
   } catch (error: any) {
     return next(new ErrorHandler(error.message, 500));
   }
